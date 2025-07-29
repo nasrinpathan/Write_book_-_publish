@@ -1,1 +1,726 @@
-<h1>hello</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Professional 3D Book</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --primary: #0a73c6;
+      --primary-dark: #074b7b;
+      --accent: #0b9b1e;
+      --danger: #d12c2c;
+      --bg: #f6f8fa;
+      --shadow: 0 4px 24px rgba(0,0,0,0.09);
+      --radius: 12px;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+      min-height: 100vh;
+      color: #2c3e50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 900px;
+      margin: 48px auto 0 auto;
+      background: #fff;
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 32px 24px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      font-size: 2.1em;
+      margin-bottom: 18px;
+      color: var(--primary-dark);
+      font-weight: 700;
+      letter-spacing: 0.015em;
+      text-shadow: 0 2px 8px #e9e9e9;
+    }
+    #book-controls, #add-pages-controls {
+      width: 100%;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    #book-controls label, #add-pages-controls label {
+      font-weight: 500;
+      color: var(--primary-dark);
+    }
+    #book-controls input[type="text"], #book-controls input[type="number"], #add-pages-controls input[type="number"] {
+      font-size: 16px;
+      padding: 8px 10px;
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      outline: none;
+      transition: border 0.2s;
+      background: #f7fbff;
+      margin-right: 2px;
+    }
+    #book-controls input[type="text"]:focus, #book-controls input[type="number"]:focus, #add-pages-controls input[type="number"]:focus {
+      border: 2px solid var(--primary-dark);
+      background: #e6f7ff;
+    }
+    /* Custom Dropdown Styles */
+    .custom-dropdown {
+      position: relative;
+      display: inline-block;
+      min-width: 170px;
+      font-family: inherit;
+      margin-right: 2px;
+    }
+    .custom-dropdown .selected {
+      padding: 8px 34px 8px 10px;
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      background: #f7fbff;
+      cursor: pointer;
+      font-size: 16px;
+      position: relative;
+      transition: border 0.2s;
+      color: var(--primary-dark);
+    }
+    .custom-dropdown .selected:focus, .custom-dropdown .selected.active {
+      border: 2px solid var(--primary-dark);
+      background-color: #e6f7ff;
+      outline: none;
+    }
+    .custom-dropdown .selected::after {
+      content: "";
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      width: 0;
+      height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-top: 7px solid var(--primary);
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+    .custom-dropdown .dropdown-list {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 105%;
+      border: 1px solid var(--primary);
+      background: #fff;
+      border-radius: 0 0 6px 6px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.09);
+      z-index: 100;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: none;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .custom-dropdown .dropdown-list.show {
+      display: block;
+      animation: fadeIn 0.18s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px);}
+      to { opacity: 1; transform: none;}
+    }
+    .custom-dropdown .dropdown-list li {
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background 0.18s;
+      color: var(--primary-dark);
+      font-size: 16px;
+    }
+    .custom-dropdown .dropdown-list li.selected {
+      background: #e6f7ff;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .custom-dropdown .dropdown-list li:hover {
+      background: #e6f7ff;
+      color: var(--primary);
+    }
+    .book {
+      perspective: 1200px;
+      width: 360px;
+      height: 480px;
+      position: relative;
+      margin-top: 24px;
+      background: transparent;
+      transition: box-shadow 0.3s;
+      border-radius: var(--radius);
+    }
+    .page {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: #fcfcfc;
+      border: 1.5px solid #dbe9f7;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+      padding: 36px 22px 22px 22px;
+      box-sizing: border-box;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      border-radius: var(--radius);
+      transform-origin: left;
+      transition: transform 0.6s, box-shadow 0.3s;
+      overflow: hidden;
+    }
+    .page-number {
+      font-weight: 600;
+      font-size: 17px;
+      margin-bottom: 14px;
+      color: var(--primary-dark);
+      letter-spacing: 0.04em;
+    }
+    .page.flipped {
+      transform: rotateY(-180deg);
+      z-index: 0;
+      box-shadow: none;
+    }
+    .page.cover {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark) 90%);
+      color: #fff;
+      font-weight: bold;
+      z-index: 20;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      border: none;
+      border-radius: var(--radius) var(--radius) 0 0;
+      box-shadow: 0 8px 24px rgba(10,115,198,0.14);
+      letter-spacing: 0.08em;
+    }
+    .page textarea {
+      flex: 1;
+      font-size: 16px;
+      border: 1px solid #b5c6d6;
+      border-radius: 6px;
+      resize: none;
+      background: #eef6fa;
+      margin-bottom: 12px;
+      padding: 10px;
+      color: #2c3e50;
+      transition: border 0.2s;
+      box-shadow: 0 1px 6px #e9f3ff;
+    }
+    .page textarea:focus {
+      border-color: var(--primary);
+      background: #e6f7ff;
+    }
+    .nav-btns {
+      margin-top: 28px;
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      width: 100%;
+    }
+    button {
+      padding: 8px 21px;
+      font-size: 17px;
+      cursor: pointer;
+      border-radius: 7px;
+      border: 1.5px solid var(--primary);
+      background: #fff;
+      color: var(--primary-dark);
+      font-weight: 500;
+      transition: background 0.22s, color 0.22s, border 0.22s;
+      box-shadow: 0 2px 8px #e5ecf9;
+      outline: none;
+    }
+    button:active, button:focus {
+      background: #e6f7ff;
+      color: var(--primary);
+      border-color: var(--primary-dark);
+    }
+    .danger {
+      border: 1.5px solid var(--danger);
+      color: var(--danger);
+      background: #fff5f5;
+      box-shadow: none;
+    }
+    .danger:active, .danger:focus {
+      background: #ffdede;
+      color: #fff;
+    }
+    .fullscreen-btn {
+      border: 1.5px solid var(--accent);
+      color: var(--accent);
+      background: #f0fff0;
+      margin-left: 8px;
+      box-shadow: none;
+    }
+    .fullscreen-btn:active, .fullscreen-btn:focus {
+      background: #d2ffda;
+      color: #0d7b19;
+    }
+    #add-pages-controls span {
+      font-size: 16px;
+      color: #555;
+      margin-left: 7px;
+      font-weight: 500;
+    }
+    /* Fullscreen styles */
+    .fullscreen {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 9999 !important;
+      margin: 0 !important;
+      background: #e7f5ff !important;
+      box-shadow: 0 0 0 10000px rgba(7,115,198,0.09);
+      border-radius: 0 !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      padding: 0 !important;
+      transition: none;
+    }
+    .fullscreen .page, .fullscreen .page.cover {
+      box-shadow: 0 0 30px rgba(10,115,198,0.15);
+      font-size: 1.1em;
+      border-radius: var(--radius);
+    }
+    .fullscreen-exit-btn {
+      position: fixed;
+      top: 18px;
+      right: 38px;
+      z-index: 10000;
+      padding: 10px 22px;
+      background: #fff;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      font-weight: 600;
+    }
+    .fullscreen-exit-btn:active {
+      background: #eaffea;
+    }
+    @media (max-width: 700px) {
+      .container {
+        padding: 12px 3vw;
+      }
+      .book {
+        width: 96vw;
+        min-width: 240px;
+        height: 70vw;
+        min-height: 300px;
+        max-width: 420px;
+        max-height: 540px;
+      }
+      .page, .page.cover {
+        font-size: 15px;
+        padding: 18px 6px 10px 6px;
+      }
+      .fullscreen-exit-btn {
+        top: 8px;
+        right: 12px;
+        font-size: 15px;
+        padding: 7px 14px;
+      }
+      .nav-btns button {
+        font-size: 15px;
+        padding: 7px 13px;
+      }
+      .custom-dropdown .selected,
+      .custom-dropdown .dropdown-list li {
+        font-size: 15px;
+        padding: 7px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Professional 3D Book</h1>
+    <div id="book-controls">
+      <label for="custom-book-dropdown">Choose Book:</label>
+      <div class="custom-dropdown" id="custom-book-dropdown">
+        <div class="selected" tabindex="0" id="book-selected-label">Choose Book</div>
+        <ul class="dropdown-list" id="book-dropdown-list"></ul>
+      </div>
+      <button id="deleteBookBtn" class="danger" title="Delete selected book">🗑️ Delete Book</button>
+      <label for="book-name">New Book Name:</label>
+      <input type="text" id="book-name" placeholder="Book name">
+      <label for="page-count">Number of pages:</label>
+      <input type="number" id="page-count" min="1" max="20" value="3">
+      <button id="createBookBtn">Create New Book</button>
+      <button id="fullscreenBtn" class="fullscreen-btn" title="Show full screen">⛶ Full Screen</button>
+    </div>
+    <div id="add-pages-controls">
+      <label for="add-pages-count">Add pages:</label>
+      <input type="number" id="add-pages-count" min="1" max="100" value="1">
+      <button id="addPagesBtn">Add Pages</button>
+      <span id="current-page-count"></span>
+    </div>
+    <div class="book" id="book"></div>
+    <div class="nav-btns">
+      <button id="prevBtn">⬅️ Prev</button>
+      <button id="nextBtn">Next ➡️</button>
+    </div>
+    <button id="exitFullscreenBtn" class="fullscreen-exit-btn" style="display:none;">Exit Full Screen ✕</button>
+  </div>
+  <script>
+    // Book data structure: { [bookName]: { pages: ["", ...], pageCount: n } }
+    const STORAGE_KEY = "3d-book-multi";
+    const LAST_BOOK_KEY = "3d-book-last";
+    let books = {};
+    let currentBook = "";
+    let pageElems = [];
+    let currentPage = 0;
+
+    function saveBooks() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+        localStorage.setItem(LAST_BOOK_KEY, currentBook);
+      } catch (e) {}
+    }
+
+    function loadBooks() {
+      try {
+        books = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        if (typeof books !== 'object' || Array.isArray(books)) books = {};
+      } catch {
+        books = {};
+      }
+      currentBook = localStorage.getItem(LAST_BOOK_KEY) || Object.keys(books)[0] || "";
+    }
+
+    function updateCustomDropdown() {
+      const dropdownList = document.getElementById("book-dropdown-list");
+      dropdownList.innerHTML = "";
+      Object.keys(books).forEach(name => {
+        const li = document.createElement("li");
+        li.textContent = name;
+        li.className = (name === currentBook) ? "selected" : "";
+        li.onclick = function(e) {
+          switchBook(name);
+          closeDropdown();
+          e.stopPropagation();
+        };
+        dropdownList.appendChild(li);
+      });
+      // Update label
+      const label = document.getElementById("book-selected-label");
+      label.textContent = currentBook || "Choose Book";
+    }
+
+    function openDropdown() {
+      document.getElementById("book-dropdown-list").classList.add("show");
+      document.getElementById("book-selected-label").classList.add("active");
+    }
+    function closeDropdown() {
+      document.getElementById("book-dropdown-list").classList.remove("show");
+      document.getElementById("book-selected-label").classList.remove("active");
+    }
+
+    function updatePageCountLabel() {
+      const span = document.getElementById("current-page-count");
+      if (books[currentBook]) {
+        span.textContent = `(Total pages: ${books[currentBook].pageCount})`;
+      } else {
+        span.textContent = "";
+      }
+    }
+
+    function makeBookPages(bookName) {
+      const bookData = books[bookName];
+      const bookDiv = document.getElementById('book');
+      if (!bookData) {
+        bookDiv.innerHTML = '';
+        updatePageCountLabel();
+        return;
+      }
+      bookDiv.innerHTML = '';
+      pageElems = [];
+      currentPage = 0;
+
+      // Cover
+      const cover = document.createElement('div');
+      cover.className = "page cover";
+      cover.innerHTML = `<div class="page-number">${bookName}</div>`;
+      cover.style.zIndex = bookData.pageCount + 2;
+      bookDiv.appendChild(cover);
+      pageElems.push(cover);
+
+      // Pages
+      for (let i = 1; i <= bookData.pageCount; i++) {
+        const page = document.createElement('div');
+        page.className = "page";
+        page.innerHTML = `
+          <textarea rows="15" cols="25" placeholder="Write on page ${i}..."></textarea>
+          <center><div class="page-number">Page ${i}</div></center>
+        `;
+        page.style.zIndex = bookData.pageCount + 1 - i;
+        bookDiv.appendChild(page);
+        pageElems.push(page);
+
+        // Restore content if available
+        const textarea = page.querySelector("textarea");
+        if (textarea && bookData.pages[i - 1]) {
+          textarea.value = bookData.pages[i - 1];
+        }
+        // Save on change
+        if (textarea) {
+          textarea.addEventListener("input", () => {
+            books[bookName].pages[i - 1] = textarea.value;
+            saveBooks();
+          });
+        }
+      }
+      updatePages();
+      updatePageCountLabel();
+    }
+
+    function updatePages() {
+      pageElems.forEach((page, idx) => {
+        if (idx < currentPage) {
+          page.classList.add('flipped');
+        } else {
+          page.classList.remove('flipped');
+        }
+      });
+    }
+
+    function switchBook(bookName) {
+      if (!books[bookName]) return;
+      currentBook = bookName;
+      document.getElementById('page-count').value = books[bookName].pageCount;
+      makeBookPages(bookName);
+      updateCustomDropdown();
+      updatePageCountLabel();
+      saveBooks();
+    }
+
+    document.getElementById('createBookBtn').onclick = function() {
+      const bookName = document.getElementById('book-name').value.trim();
+      let numPages = parseInt(document.getElementById('page-count').value, 10);
+      if (!bookName) {
+        alert("Please enter a name for the new book.");
+        return;
+      }
+      if (books[bookName]) {
+        alert("A book with that name already exists.");
+        return;
+      }
+      if (isNaN(numPages) || numPages < 1) numPages = 1;
+      if (numPages > 20) numPages = 20;
+      books[bookName] = { pageCount: numPages, pages: Array(numPages).fill("") };
+      currentBook = bookName;
+      document.getElementById('book-name').value = "";
+      updateCustomDropdown();
+      switchBook(bookName);
+      saveBooks();
+    };
+
+    document.getElementById('deleteBookBtn').onclick = function() {
+      if (!currentBook || !books[currentBook]) return;
+      if (Object.keys(books).length === 1) {
+        alert("Cannot delete the last remaining book.");
+        return;
+      }
+      if (!confirm(`Are you sure you want to delete the book: "${currentBook}"? This cannot be undone.`)) {
+        return;
+      }
+      delete books[currentBook];
+      const bookNames = Object.keys(books);
+      currentBook = bookNames[0] || "";
+      updateCustomDropdown();
+      switchBook(currentBook);
+      saveBooks();
+    };
+
+    document.getElementById('addPagesBtn').onclick = function() {
+      const addCountInput = document.getElementById('add-pages-count');
+      let addCount = parseInt(addCountInput.value, 10);
+      if (!books[currentBook]) return;
+      if (isNaN(addCount) || addCount < 1) {
+        alert("Enter how many pages to add.");
+        return;
+      }
+      const maxPages = 100;
+      let book = books[currentBook];
+      if (book.pageCount + addCount > maxPages) {
+        addCount = maxPages - book.pageCount;
+      }
+      if (addCount <= 0) {
+        alert("Maximum pages reached.");
+        return;
+      }
+      for (let i = 0; i < addCount; i++) {
+        book.pages.push("");
+      }
+      book.pageCount += addCount;
+      saveBooks();
+      makeBookPages(currentBook);
+      updatePageCountLabel();
+    };
+
+    document.getElementById("nextBtn").onclick = () => {
+      if (currentPage < pageElems.length - 1) {
+        currentPage++;
+        updatePages();
+      }
+    };
+    document.getElementById("prevBtn").onclick = () => {
+      if (currentPage > 0) {
+        currentPage--;
+        updatePages();
+      }
+    };
+
+    window.addEventListener("keydown", function(e) {
+      if (document.activeElement.tagName === 'TEXTAREA') return;
+      if (e.key === "ArrowRight") {
+        document.getElementById("nextBtn").click();
+      } else if (e.key === "ArrowLeft") {
+        document.getElementById("prevBtn").click();
+      }
+    });
+
+    // Fullscreen API cross-browser fallback
+    const bookEl = document.getElementById("book");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const exitFullscreenBtn = document.getElementById("exitFullscreenBtn");
+    let inFullscreen = false;
+
+    function enterFullscreen() {
+      if (bookEl.requestFullscreen) {
+        bookEl.requestFullscreen();
+      } else if (bookEl.webkitRequestFullscreen) { // Safari
+        bookEl.webkitRequestFullscreen();
+      } else if (bookEl.msRequestFullscreen) { // IE/Edge
+        bookEl.msRequestFullscreen();
+      } else {
+        bookEl.classList.add("fullscreen");
+        exitFullscreenBtn.style.display = "block";
+        document.body.style.overflow = "hidden";
+        inFullscreen = true;
+      }
+    }
+
+    function exitFullscreen() {
+      if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      } else {
+        bookEl.classList.remove("fullscreen");
+        exitFullscreenBtn.style.display = "none";
+        document.body.style.overflow = "";
+        inFullscreen = false;
+      }
+    }
+
+    function handleFullscreenChange() {
+      if (
+        document.fullscreenElement === bookEl ||
+        document.webkitFullscreenElement === bookEl ||
+        document.msFullscreenElement === bookEl
+      ) {
+        exitFullscreenBtn.style.display = "block";
+        document.body.style.overflow = "hidden";
+        inFullscreen = true;
+      } else {
+        exitFullscreenBtn.style.display = "none";
+        document.body.style.overflow = "";
+        inFullscreen = false;
+      }
+    }
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("msfullscreenchange", handleFullscreenChange);
+
+    fullscreenBtn.onclick = () => {
+      enterFullscreen();
+    };
+    exitFullscreenBtn.onclick = () => {
+      exitFullscreen();
+    };
+
+    window.addEventListener("keydown", function(e) {
+      if (inFullscreen && e.key === "Escape" && !(document.fullscreenElement||document.webkitFullscreenElement||document.msFullscreenElement)) {
+        exitFullscreen();
+      }
+    });
+
+    // Custom Dropdown events
+    const dropdownLabel = document.getElementById("book-selected-label");
+    const dropdownListEl = document.getElementById("book-dropdown-list");
+    const dropdownWrapper = document.getElementById("custom-book-dropdown");
+    dropdownLabel.addEventListener("click", function(e) {
+      e.stopPropagation();
+      const isOpen = dropdownListEl.classList.contains("show");
+      if (isOpen) {
+        closeDropdown();
+      } else {
+        openDropdown();
+      }
+    });
+    dropdownLabel.addEventListener("keydown", function(e) {
+      // Keyboard nav
+      if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+        openDropdown();
+        dropdownListEl.querySelector("li.selected")?.focus();
+        e.preventDefault();
+      }
+    });
+    dropdownListEl.addEventListener("keydown", function(e) {
+      // Keyboard nav for dropdown items
+      const items = Array.from(dropdownListEl.querySelectorAll("li"));
+      let idx = items.findIndex(item => item === document.activeElement);
+      if (e.key === "ArrowDown") {
+        if (idx < items.length - 1) items[idx+1].focus();
+        e.preventDefault();
+      } else if (e.key === "ArrowUp") {
+        if (idx > 0) items[idx-1].focus();
+        e.preventDefault();
+      } else if (e.key === "Escape") {
+        closeDropdown();
+        dropdownLabel.focus();
+      } else if (e.key === "Enter" || e.key === " ") {
+        items[idx]?.click();
+        closeDropdown();
+      }
+    });
+    document.body.addEventListener("click", function() {
+      closeDropdown();
+    });
+    dropdownWrapper.addEventListener("click", function(e) {
+      e.stopPropagation();
+    });
+
+    // Initial load
+    loadBooks();
+    if (Object.keys(books).length === 0) {
+      books["My 3D Book"] = { pageCount: 3, pages: ["", "", ""] };
+      currentBook = "My 3D Book";
+      saveBooks();
+    }
+    updateCustomDropdown();
+    switchBook(currentBook);
+    updatePageCountLabel();
+  </script>
+</body>
+</html>
